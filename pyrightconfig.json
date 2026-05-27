@@ -1,0 +1,8 @@
+{
+  "extraPaths": [
+    "."
+  ],
+  "exclude": [
+    "**/_pyrefly_virtual_/**"
+  ]
+}

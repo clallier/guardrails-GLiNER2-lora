@@ -1,0 +1,52 @@
+[project]
+name = "gliguard-llmguardrails-mlx-finetune"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "mlx>=0.10.0",
+    "mlx-lm>=0.1.0",
+    "transformers>=4.38.0",
+    "torch>=2.0.0",
+    "datasets>=2.18.0",
+    "streamlit>=1.31.0",
+    "numpy>=1.24.0",
+    "wandb>=0.16.0",
+    "gliner2>=0.1.0",
+    "torchvision",
+]
+
+[build-system]
+requires = ["setuptools>=61.0.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = ["src"]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.0.0",
+    "ruff>=0.3.0",
+    "pylint>=3.0.0",
+    "radon>=6.0.0",
+    "bandit>=1.7.0",
+]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+
+[tool.pyright]
+extraPaths = ["."]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+format.preview = true
+
+[tool.ruff.lint]
+# E: Pycodestyle (Style), F: Pyflakes (Bugs), B: Bugbear (Smells), I: Isort (Imports), S: Bandit (Security), 
+# ISC: Implicit String Concatenation, PLC0415: import-outside-toplevel
+select = ["E", "F", "B", "I", "S", "ISC", "PLC0415"]

@@ -1,0 +1,29 @@
+/* Custom theme-aware glassmorphic safety verdict cards */
+
+:root {
+  /* HSL angles representing safe/unsafe colors on the color wheel.
+     No absolute colors are hardcoded; they represent dynamic hue components. */
+  --unsafe-hue: 0;       /* Red hue */
+  --safe-hue: 120;       /* Green hue */
+}
+
+.verdict-card {
+  padding: 15px;
+  border-radius: 6px;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  color: var(--text-color);
+  font-family: var(--font);
+}
+
+.verdict-unsafe {
+  background: hsla(var(--unsafe-hue), 80%, 50%, 0.1);
+  border: 1px solid hsla(var(--unsafe-hue), 80%, 50%, 0.8);
+  box-shadow: 0 0 15px hsla(var(--unsafe-hue), 80%, 50%, 0.2);
+}
+
+.verdict-safe {
+  background: hsla(var(--safe-hue), 80%, 40%, 0.1);
+  border: 1px solid hsla(var(--safe-hue), 80%, 40%, 0.8);
+  box-shadow: 0 0 15px hsla(var(--safe-hue), 80%, 40%, 0.2);
+}
