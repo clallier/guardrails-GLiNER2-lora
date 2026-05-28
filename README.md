@@ -60,23 +60,51 @@ Local setup for training the model
 
 ## Results
 
-On prompt classification "prompt_safety" task:
+On prompt classification "prompt_safety" task, using the whole validation dataset (`data/valid.jsonl`, 2360 samples):
 
 | Model                                            | Accuracy | F1 Score | Precision | Recall |
 | ------------------------------------------------ | :------- | :------- | --------- | ------ |
-| fastino/gliguard-LLMGuardrails-300M (base model) | 72.00%   | 51.70%   | 78.95%    | 38.46% |
-| final adapter (in adapters/final/)               | 97.00%   | 96.30%   | 92.86%    | 100.0% |
+| fastino/gliguard-LLMGuardrails-300M (base model) | 75.47%   | 61.53%   | 88.87%    | 47.05% |
+| final adapter (in adapters/final/)               | 98.35%   | 98.02%   | 98.17%    | 97.87% |
 
 ### Training logs
 https://wandb.ai/corentin-l/guardrail-finetune/runs/1fux5p6j
 
-### Limits
+## ⚠️ Limitations & Future Work
 
-![val_loss](doc/eval_loss.png)
+### 📈 Training Convergence & Loss Analysis
+![test_loss](doc/eval_loss.png)
 
-- The **val loss** is still decreasing (1.68) after 2 epochs, we could potentially try to train on another epoch before over-fitting.
-- The adapter model is a bit aggressive against short prompts:
-   - We could add more harmless short prompts in the training dataset, but:
-   - It is designed to be used as a tier-2 security layer, with a simpler tier-1 (for instance, a naive bayesian model) that filters out obvious prompts.
-- We could benefit to use multi-turn prompts injections in the training dataset.
-- It's a short experiment, we could potentially improve the results by tuning hyperparameters (epochs, learning rate, batch size, etc.)
+* **Test Loss Scale (Batch Sum Aggregation):** 
+  - The test loss (rendered as `test_loss` on WandB) is computed from a split of the training dataset (`data/train.jsonl`, $\approx 21,230$ samples).
+  - The test loss starts at **`6.2`**, spikes to **`9.0`**, and converges to **`1.68`** after 2 training epochs. 
+
+* **Per-Sample Loss:** 
+  - The starting loss of **`6.2`** ($0.775$ per sample) reflects the baseline pre-trained model's performance on the test split (matching the $75.47\%$ base accuracy).
+  - A final test loss of **`1.68`** equates to an average loss of **`0.21` per sample**.
+
+
+![learning_rate](doc/lr.png)
+
+---
+
+### 🔍 Known Behaviors & Edge Cases
+
+* **Length Bias:**
+  The adapter model is a bit "aggressive" on short prompts, which leads to false positives. This model is designed to be used as a **Tier-2 Semantic Layer**. A lightweight **Tier-1 filter** (e.g., Naive Bayes or a semantic cache) should instantly route standard conversational queries to minimize latency and filter out obvious edge cases, protecting the adapter from out-of-distribution noise.
+
+* **Single-Turn Context Limitation:**
+  The baseline model supports a **2048-token context window**. Real-world injection vectors often unfold across multi-turn dialogs (e.g., steering-based jailbreaks). Fine-tuning on multi-turn prompt templates with conversational turn-delimiters is an essential next step.
+
+---
+
+### 🛠️ General Optimizations
+
+To improve adapter performance, we can consider modifying these parameters:
+
+| Parameter | Current Default | To experiment | Rationale |
+| :--- | :--- | :--- | :--- |
+| **Epochs** | `2` | `3 - 4` | Allows the test loss to converge fully. |
+| **LoRA Target Modules** | `["encoder"]` | `["query", "key", "value", "output"]` | Target all attention layers to increase capacity. |
+| **LoRA Rank ($r$)** | `8` | `16` or `32` | Captures more complex semantic signatures. |
+| **Learning Rate Schedule**| Warmup + Linear Decay (`linear`) | `cosine`, `constant` | Smooths encoder updates to mitigate representation shock. Configured inside `TrainingConfig` in `trainer.py`. |
