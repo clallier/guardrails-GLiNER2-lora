@@ -52,7 +52,7 @@ def _build_config(args: argparse.Namespace) -> GlobalConfig:
             epochs=None,
             batch_size=None,
             lr=None,
-            val_split=None,
+            test_split=None,
             wandb_project=None,
             wandb_run=None)
         >>> config = _build_config(args)

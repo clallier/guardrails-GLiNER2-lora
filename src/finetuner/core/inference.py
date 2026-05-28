@@ -2,7 +2,7 @@
 
 import json
 import os
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 import torch
 from gliner2 import GLiNER2
@@ -18,7 +18,6 @@ from src.finetuner.constants import (
     LABEL_UNSAFE,
     LogType,
 )
-from src.finetuner.core.device import DeviceResolver
 from src.finetuner.core.tracker import TrainingTracker
 
 
@@ -151,14 +150,15 @@ class InferenceEngine:
         conf = res_val.get("confidence", 1.0)
         return conf if label == LABEL_NAMES[LABEL_UNSAFE] else (1.0 - conf)
 
-    def load_validation_records(self, max_samples: int) -> List[Dict[str, Any]]:
+    def load_validation_records(self, max_samples: Optional[int] = None) -> List[Dict[str, Any]]:
         """Loads and parses validation jsonl dataset records from disk.
 
         High level role: Validation dataset parser.
         Description: Reads records from the cached JSONL dataset up to the requested samples limit.
 
         Args:
-            max_samples (int): Maximum validation records to load.
+            max_samples (Optional[int]): Maximum validation records to load.
+                If None or <= 0, returns the complete dataset.
 
         Returns:
             List[Dict[str, Any]]: Parsed dataset record dictionaries.
@@ -179,7 +179,9 @@ class InferenceEngine:
         with open(valid_path) as f:
             records = [json.loads(line) for line in f if line.strip()]
 
-        return records[:max_samples] if 0 < max_samples < len(records) else records
+        if max_samples is not None and max_samples > 0:
+            return records[:max_samples]
+        return records
 
     def get_model(self, model_id: str) -> Any:
         """Loads and caches model instances with device optimization.
@@ -243,10 +245,8 @@ class InferenceEngine:
         try:
             model = GLiNER2.from_pretrained(BASE_MODEL_ID)
             self._load_adapter_if_needed(model, model_id)
-            device = DeviceResolver.get_optimal_device()
-            model = model.to(device)
             self._loaded_models[model_id] = model
-            self.tracker.add_log(LogType.RESPONSE, f"Model '{model_id}' loaded on '{device}'.")
+            self.tracker.add_log(LogType.RESPONSE, f"Model '{model_id}' loaded.")
             return model
         except Exception as err:
             self.tracker.add_log(LogType.ERROR, f"Failed to load model '{model_id}': {str(err)}")

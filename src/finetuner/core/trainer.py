@@ -157,6 +157,23 @@ class PyTorchTrainer:
         cfg_dict = self._get_config_dict(use_mps)
         return TrainingConfig(**cfg_dict)
 
+    def _get_lora_params(self) -> Dict[str, Any]:
+        """Gets dictionary of LoRA adaptation parameters.
+
+        High level role: LoRA parameter dict builder.
+
+        Returns:
+            Dict[str, Any]: LoRA config dictionary.
+        """
+        return {
+            "use_lora": True,
+            "lora_r": 8,
+            "lora_alpha": 16.0,
+            "lora_dropout": 0.0,
+            "lora_target_modules": ["encoder"],
+            "save_adapter_only": True,
+        }
+
     def _get_config_dict(self, use_mps: bool) -> Dict[str, Any]:
         """Gets a flat dictionary representation of the training configuration.
 
@@ -175,16 +192,11 @@ class PyTorchTrainer:
             "batch_size": self.config.batch_size,
             "encoder_lr": self.config.learning_rate,
             "task_lr": 5e-4,
-            "use_lora": True,
-            "lora_r": 8,
-            "lora_alpha": 16.0,
-            "lora_dropout": 0.0,
-            "lora_target_modules": ["encoder"],
-            "save_adapter_only": True,
             "logging_steps": self.config.steps_per_report,
             "report_to_wandb": self.config.use_wandb,
             "wandb_project": self.config.wandb_project,
         }
+        params.update(self._get_lora_params())
         params.update(self._get_device_specific_params(use_mps))
         return params
 

@@ -2,6 +2,8 @@
 
 import argparse
 import os
+import time
+from typing import Optional
 
 from src.finetuner.config import GlobalConfig
 from src.finetuner.constants import BASE_MODEL_ID, DEFAULT_THRESHOLD
@@ -32,12 +34,22 @@ def _parse_args() -> argparse.Namespace:
         "--adapter",
         type=str,
         default="adapters/final",
-        help="Adapter path (adapters/xxx). 'None' uses base model",
+        help="Adapter path (adapters/xxx).",
+    )
+    parser.add_argument(
+        "--no-adapter",
+        action="store_true",
+        help="Use the base model directly without loading any adapter",
     )
     parser.add_argument("--prompt", type=str, help="Single prompt to evaluate")
     parser.add_argument("--threshold", type=float, default=DEFAULT_THRESHOLD, help="Threshold")
     parser.add_argument("--validate", action="store_true", help="Run batch validation")
-    parser.add_argument("--max-samples", type=int, default=100, help="Max validation samples")
+    parser.add_argument(
+        "--max-samples",
+        type=int,
+        default=None,
+        help="Max validation samples (None loads the complete validation dataset)",
+    )
     return parser.parse_args()
 
 
@@ -71,7 +83,7 @@ def _run_single_inference(
 
 
 def _run_dataset_validation(
-    engine: InferenceEngine, model_id: str, max_samples: int, threshold: float
+    engine: InferenceEngine, model_id: str, max_samples: Optional[int], threshold: float
 ) -> None:
     """Loads the validation dataset and executes batch safety evaluation.
 
@@ -98,7 +110,14 @@ def _run_dataset_validation(
     records = engine.load_validation_records(max_samples)
     model = engine.get_model(model_id)
     print(f"\nRunning batch validation on {len(records)} samples...")
+
+    start_time = time.time()
     verdicts = engine.run_batched_inference(model, records)
+    duration = time.time() - start_time
+
+    throughput = len(records) / duration if duration > 0 else 0.0
+    device_type = next(model.parameters()).device.type
+
     print(f"Completed processing {len(verdicts)} validation samples.")
 
     probs = [engine.get_unsafe_probability(v) for v in verdicts]
@@ -108,11 +127,14 @@ def _run_dataset_validation(
     print("\n============================================================")
     print("📈 Evaluation Metrics")
     print("============================================================")
+    print(f"Device    : {device_type.upper()}")
+    print(f"Time Taken: {duration:.2f} seconds")
+    print(f"Throughput: {throughput:.2f} samples/sec")
     print(f"Accuracy  : {metrics['accuracy']:.4f}")
+    print(f"F1 Score  : {metrics['f1_score']:.4f}")
     print(f"Precision : {metrics['precision']:.4f}")
     print(f"Recall    : {metrics['recall']:.4f}")
-    print(f"F1 Score  : {metrics['f1_score']:.4f}")
-    print(f"Total Ev  : {metrics['total_evaluated']}")
+    print(f"Samples   : {metrics['total_evaluated']}")
     print(f"TP/FP/TN/FN: {metrics['tp']}/{metrics['fp']}/{metrics['tn']}/{metrics['fn']}")
     print("============================================================")
 
@@ -141,7 +163,7 @@ def main() -> None:
         raise ValueError("Must specify either --prompt or --validate.")
 
     target_model = args.model_id
-    if args.adapter and args.adapter != "None":
+    if not args.no_adapter and args.adapter:
         target_model = (
             f"adapters/{args.adapter}"
             if not os.path.exists(args.adapter) and os.path.exists(f"adapters/{args.adapter}")
