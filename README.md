@@ -83,9 +83,6 @@ https://wandb.ai/corentin-l/guardrail-finetune/runs/1fux5p6j
   - The starting loss of **`6.2`** ($0.775$ per sample) reflects the baseline pre-trained model's performance on the test split (matching the $75.47\%$ base accuracy).
   - A final test loss of **`1.68`** equates to an average loss of **`0.21` per sample**.
 
-
-![learning_rate](doc/lr.png)
-
 ---
 
 ### 🔍 Known Behaviors & Edge Cases
@@ -107,4 +104,7 @@ To improve adapter performance, we can consider modifying these parameters:
 | **Epochs** | `2` | `3 - 4` | Allows the test loss to converge fully. |
 | **LoRA Target Modules** | `["encoder"]` | `["query", "key", "value", "output"]` | Target all attention layers to increase capacity. |
 | **LoRA Rank ($r$)** | `8` | `16` or `32` | Captures more complex semantic signatures. |
-| **Learning Rate Schedule**| Warmup + Linear Decay (`linear`) | `cosine`, `constant` | Smooths encoder updates to mitigate representation shock. Configured inside `TrainingConfig` in `trainer.py`. |
+| **Learning Rate Schedule**| Warmup + Linear Decay (`linear`) | `cosine`, `constant` | Smooths encoder updates to mitigate representation shock (peak loss ~9) . |
+
+
+![learning_rate](doc/lr.png)
