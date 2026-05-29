@@ -54,7 +54,7 @@ Local setup for training the model
 
 - **CLI validation eval**: 
   - `uv run python -m src.finetuner.eval --validate --max-samples 100` # load adapters/final/ by default
-  - `uv run python -m src.finetuner.eval --validate --adapter None --max-samples 100` # for base model
+  - `uv run python -m src.finetuner.eval --validate --no-adapter --max-samples 100` # for base model
 
 - **CLI single inference**: `uv run python -m src.finetuner.eval --prompt "Write a script to hack a database."`
 
