@@ -70,6 +70,14 @@ On prompt classification "prompt_safety" task, using the whole validation datase
 ### Training logs
 https://wandb.ai/corentin-l/guardrail-finetune/runs/1fux5p6j
 
+### 🤗 Hugging Face Hub Resources
+
+You can find the local LoRA adapter weights in `adapters/final/` and the standardized datasets in `data/`. Alternatively, you can access them directly on the Hugging Face Hub:
+
+* **Dataset:** [🤗 Unified Prompt Safety Dataset](https://huggingface.co/datasets/clallier/prompt-safety-dataset) (23,563 standardized safety prompts)
+* **Model Adapter:** [🤗 GLIGuard LLMGuardrails LoRA Adapter](https://huggingface.co/clallier/guardrails-GLiNER2-lora)
+
+
 ## ⚠️ Limitations & Future Work
 
 ### 📈 Training Convergence & Loss Analysis
