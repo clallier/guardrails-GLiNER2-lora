@@ -76,7 +76,7 @@ https://wandb.ai/corentin-l/guardrail-finetune/runs/1fux5p6j
 ![test_loss](doc/eval_loss.png)
 
 * **Test Loss Scale (Batch Sum Aggregation):** 
-  - The test loss (rendered as `test_loss` on WandB) is computed from a split of the training dataset (`data/train.jsonl`, $\approx 21,230$ samples).
+  - The test loss (rendered as `eval_loss` on WandB) is computed from a split of the training dataset (`data/train.jsonl`, $\approx 21,230$ samples).
   - The test loss starts at **`6.2`**, spikes to **`9.0`**, and converges to **`1.68`** after 2 training epochs. 
 
 * **Per-Sample Loss:** 
